@@ -1,0 +1,1 @@
+http://www.c-sharpcorner.com/UploadFile/asmabegam/mvc-angular-js-and-wcf-rest-service-for-master-or-detail-gri/
