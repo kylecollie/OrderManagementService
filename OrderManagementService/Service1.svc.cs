@@ -8,26 +8,80 @@ using System.Text;
 
 namespace OrderManagementService
 {
-    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in code, svc and config file together.
-    // NOTE: In order to launch WCF Test Client for testing this service, please select Service1.svc or Service1.svc.cs at the Solution Explorer and start debugging.
+ 
     public class Service1 : IService1
     {
-        public string GetData(int value)
+        OrderManagementEntities OME;
+
+        public Service1()
         {
-            return string.Format("You entered: {0}", value);
+            OME = new OrderManagementEntities();
         }
 
-        public CompositeType GetDataUsingDataContract(CompositeType composite)
+        public List<OrderDataContract.OrderMasterDataContract> GetOrderMaster()
         {
-            if (composite == null)
+            var query = (from a in OME.OrderMasters select a).Distinct();
+            List<OrderDataContract.OrderMasterDataContract> orderMasterList = new List<OrderDataContract.OrderMasterDataContract>();
+            query.ToList().ForEach(rec =>
             {
-                throw new ArgumentNullException("composite");
-            }
-            if (composite.BoolValue)
+                orderMasterList.Add(new OrderDataContract.OrderMasterDataContract
+                {
+                    Order_No = Convert.ToString(rec.Order_No),
+                    Table_ID = rec.Table_ID,
+                    Description = rec.Description,
+                    Order_DATE = Convert.ToString(rec.Order_DATE),
+                    Waiter_Name = rec.Waiter_Name
+                });
+            });
+            return orderMasterList;
+        }
+
+        public OrderDataContract.OrderMasterDataContract SearchOrderMaster(string Order_No)
+        {
+            OrderDataContract.OrderMasterDataContract OrderMaster = new OrderDataContract.OrderMasterDataContract();
+
+            try
             {
-                composite.StringValue += "Suffix";
+
+                var query = (from a in OME.OrderMasters
+                             where a.Order_No.Equals(Order_No)
+                             select a).Distinct().FirstOrDefault();
+
+                OrderMaster.Order_No = Convert.ToString(query.Order_No);
+                OrderMaster.Table_ID = query.Table_ID;
+                OrderMaster.Description = query.Description;
+                OrderMaster.Order_DATE = Convert.ToString(query.Order_DATE);
+                OrderMaster.Waiter_Name = query.Waiter_Name;
             }
-            return composite;
+            catch (Exception ex)
+            {
+                throw new FaultException<string>
+                       (ex.Message);
+            }
+            return OrderMaster;
+        }
+
+        public List<OrderDataContract.OrderDetailDataContract> OrderDetails(string Order_No)
+        {
+            var query = (from a in OME.OrderDetails
+                         where a.Order_No.Equals(Order_No)
+                         select a).Distinct();
+
+            List<OrderDataContract.OrderDetailDataContract> OrderDetailList = new List<OrderDataContract.OrderDetailDataContract>();
+
+            query.ToList().ForEach(rec =>
+            {
+                OrderDetailList.Add(new OrderDataContract.OrderDetailDataContract
+                {
+                    Order_Detail_No = Convert.ToString(rec.Order_Detail_No),
+                    Order_No = Convert.ToString(rec.Order_No),
+                    Item_Name = rec.Item_Name,
+                    Notes = rec.Notes,
+                    QTY = Convert.ToString(rec.QTY),
+                    Price = Convert.ToString(rec.Price)
+                });
+            });
+            return OrderDetailList;
         }
     }
 }
